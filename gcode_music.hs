@@ -7,7 +7,8 @@
 {-# LANGUAGE OverloadedLists #-}
 
 import qualified Data.Map as M;
-import Data.Maybe
+import Data.Maybe;
+import Debug.Trace as T;
 
 ------------------------
 -- Specification of EDSL
@@ -17,7 +18,16 @@ data SingleNote =
     GIS | A | AIS | H |
     C1 | CIS1 | D1 | DIS1 |
     E1 | F1 | FIS1 | G1 |
-    GIS1 | A1 | AIS1 | H1 deriving (Show, Eq, Ord, Enum)
+    GIS1 | A1 | AIS1 | H1 |
+    C2 | CIS2 | D2 | DIS2 |
+    E2 | F2 | FIS2 | G2 |
+    GIS2 | A2 | AIS2 | H2 |
+    C3 | CIS3 | D3 | DIS3 |
+    E3 | F3 | FIS3 | G3 |
+    GIS3 | A3 | AIS3 | H3 |
+    C4 | CIS4 | D4 | DIS4 |
+    E4 | F4 | FIS4 | G4 |
+    GIS4 | A4 | AIS4 | H4 deriving (Show, Eq, Ord, Enum)
 
 data Axis = X | Y | Z deriving (Show, Eq)
 
@@ -36,7 +46,7 @@ data MusicSheet where
   (:-:) :: MusicSheet -> MusicSheet -> MusicSheet
   Title :: Name -> MusicSheet
   BeginMusic :: Sheet -> MusicSheet
-  BeginTransposed :: Sheet -> Integer -> MusicSheet
+  BeginTransposed :: Integer -> Sheet -> MusicSheet
 
 infixr 3 :-:
 
@@ -62,6 +72,10 @@ instance Show MusicSheet where
   show (m1 :-: m2) = "(" ++ show m1 ++ " :-: "++ show m2 ++ ")"
   show (Title name) = "(Title: " ++ show name ++ ")"
   show (BeginMusic music) = "(Music: " ++ show music ++ ")"
+  show (BeginTransposed amount sheet) =
+    "(TransposedMusic: " ++ show sheet ++
+    " using transposition of " ++ show amount ++
+    " halve tones)"
 
 instance Show Sheet where
   show (Pause f) = "(Pause :" ++ show f ++ ")"
@@ -70,7 +84,6 @@ instance Show Sheet where
   show (ThreeNote n) = "(note: " ++ show n ++ ")"
   show (e1 :| e2) = "(" ++ show e1 ++ " | " ++ show e2 ++ ")"
   show (e1 :+ e2) = "(" ++ show e1 ++ " + " ++ show e2 ++ ")"
-
 
 ---------------------
 -- evaluator for EDSL
@@ -111,7 +124,7 @@ evalMusicSheet (ResetAxis axisList) _ =
 evalMusicSheet (BeginMusic sheet) preferences =
   generateGCode sheet preferences
 
-evalMusicSheet (BeginTransposed sheet amount) preferences =
+evalMusicSheet (BeginTransposed amount sheet) preferences =
   generateGCode (transposeSheet sheet amount) preferences
 
 evalMusicSheet (m1 :-: m2) preferences =
@@ -132,63 +145,51 @@ generateGCode (OneNote (note, duration) :+ e2) preferences =
 
 generateGCode (Pause fraction) preferences =
   "G4 P"
-  ++ show (floor (fraction * fromJust (M.lookup "duration" preferences)))
+  ++ show (ceiling (1000 * fraction * fromJust (M.lookup "duration" preferences)))
   ++ " ; pauses note\n"
 
 generateGCode (e1 :+ e2) preferences =
   generateGCode e1 preferences ++ generateGCode e2 preferences
 
 generateGCode (OneNote (note, duration)) preferences =
-  let lookup = zip [C .. H1] (forwards $ fromJust (M.lookup "feedZ" preferences))
-      fn = (calcLength (findFValue note lookup) duration preferences)
-      feedrate = (ceiling $ findFValue note lookup)
-      lenZ = (round' 10 fn)
-  in
-    "G1 F"
-    ++ show feedrate
-    ++ " ; sets feedrate to "
-    ++ show feedrate ++ " mm/min"
-    ++ "\nG1 Z"
-    ++ show lenZ
-    ++ " ; moves to Z="
-    ++ show lenZ ++ "\n"
+  let ([(Z, lenZ)], feedrate) = getLF [Z] [note] preferences duration
+  in "G1 F"
+     ++ show feedrate
+     ++ " ; sets feedrate to "
+     ++ show feedrate ++ " mm/min"
+     ++ "\nG1 Z"
+     ++ show lenZ
+     ++ " ; moves to Z="
+     ++ show lenZ ++ "\n"
 
 generateGCode (TwoNote (note1, note2, duration)) preferences =
-  let feedTableX = zip [C .. H1] (forwards $ fromJust (M.lookup "feedX" preferences))
-      feedTableY = zip [C .. H1] (forwards $ fromJust (M.lookup "feedY" preferences))
-      feedrateX = findFValue note1 feedTableX
-      feedrateY = findFValue note2 feedTableY
-      lenX = round' 10 $ calcLength feedrateX duration preferences
-      lenY = round' 10 $ calcLength feedrateY duration preferences
-      feedrate = round' 10 $ (sqrt $ feedrateX ** 2 + feedrateY ** 2) / duration
-  in
-    "G1 X" ++ show lenX
-    ++ " Y" ++ show lenY
-    ++ " G1 F"
-    ++ show feedrate
-    ++ " ; sets feedrate to "
-    ++ show feedrate ++ " mm/min\n"
+  let ([(X, lenX), (Y, lenY)], feedrate) = getLF [X, Y] [note1, note2] preferences duration
+  in "G1 X" ++ show lenX
+     ++ " Y" ++ show lenY
+     ++ " F"
+     ++ show feedrate
+     ++ "\n"
 
 generateGCode (ThreeNote (note1, note2, note3, duration)) preferences =
-  let feedTableX = zip [C .. H1] (forwards $ fromJust (M.lookup "feedX" preferences))
-      feedTableY = zip [C .. H1] (forwards $ fromJust (M.lookup "feedY" preferences))
-      feedTableZ = zip [C .. H1] (forwards $ fromJust (M.lookup "feedZ" preferences))
-      feedrateX = findFValue note1 feedTableX
-      feedrateY = findFValue note2 feedTableY
-      feedrateZ = findFValue note2 feedTableZ
-      lenX = round' 10 $ calcLength feedrateX duration preferences
-      lenY = round' 10 $ calcLength feedrateY duration preferences
-      lenZ = round' 10 $ calcLength feedrateZ duration preferences
+  let ([(Z, lenZ), (X, lenX), (Y, lenY)], feedrate) =
+        getLF [Z, X, Y] [note1, note2, note3] preferences duration
+  in "G1 Z" ++ show lenZ
+     ++ " X" ++ show lenX
+     ++ " Y" ++ show lenY
+     ++ " F"
+     ++ show feedrate
+     ++ "\n"
+
+getLF :: [Axis] -> [SingleNote] -> Preferences -> Duration -> ([(Axis, Double)], Double)
+getLF axis n preferences duration =
+  let calc = \feedrate -> round' 10 $ calcLength feedrate duration preferences
+      zipNF x = zip notes (forwards' x preferences)
+      feedTable = map zipNF axis
+      feedRates = zipWith findFValue n feedTable
+      distances = map calc feedRates
       -- TODO: this is not correct
-      feedrate = round' 10 $ (sqrt $ feedrateX ** 2 + feedrateY ** 2 + feedrateZ ** 2) / duration
-  in
-    "G1 X" ++ show lenX
-    ++ " Y" ++ show lenY
-    ++ " Z" ++ show lenZ
-    ++ " G1 F"
-    ++ show feedrate
-    ++ " ; sets feedrate to "
-    ++ show feedrate ++ " mm/min\n"
+      feedrate = round' 10 (vectorLength feedRates)
+  in (zip axis distances, feedrate)
 
 ---------------------------------------
 -- helper functions for generateGCode
@@ -197,13 +198,20 @@ calcLength velocity duration preferences =
   (fromJust (M.lookup "duration" preferences) * duration) *
   (velocity / 60) -- unit is mm/s
 
+vectorLength :: [Double] -> Double
+vectorLength vector =
+  sqrt (sum (map (**2) vector))
+
+notes :: [SingleNote]
+notes = [C .. H4]
+
 ceilingDbl :: Double -> Integer
 ceilingDbl value =
   ceiling (toRational value)
 
 findFValue :: SingleNote -> [(SingleNote, Double)] -> Double
 findFValue note lookup =
-  let isSearched = (\(x, _) -> x == note)
+  let isSearched = \(x, _) -> x == note
   in snd $ (filter isSearched lookup) !! 0
 
 round' :: Integer -> Double -> Double
@@ -213,22 +221,41 @@ round' digits number =
 
 forwards :: Double -> [Double]
 forwards speed =
-  let upperBound = 40
-  in
-    map (fromIntegral . ceiling) $
-    map (\chromaticTone ->
-           speed * 2 **
-           (1/12 * fromInteger chromaticTone))
-    [0 .. upperBound]
+  let upperBound = toInteger (length notes)
+  in map
+     (\chromaticTone ->
+        speed * 2 **
+        (1/12 * fromInteger chromaticTone))
+     [0 .. upperBound]
+
+forwards' :: Axis -> Preferences -> [Double]
+forwards' axis preferences =
+  let upperBound = toInteger (length notes)
+      axisToStr a = case (a) of
+        X -> "feedX"
+        Y -> "feedY"
+        Z -> "feedZ"
+      speed = fromJust $ M.lookup (axisToStr axis) preferences
+  in map
+     (\chromaticTone ->
+        speed * 2 **
+        (1/12 * fromInteger chromaticTone))
+     [0 .. upperBound]
 
 transposeSheet :: Sheet -> Integer -> Sheet
-transposeSheet sheet amount =
-  sheetMap (\x -> iterate succ x !! (fromInteger amount)) sheet
+transposeSheet sheet amount
+  | amount < 0 = sheetMap (transposer pred) sheet
+  | amount > 0 = sheetMap (transposer succ) sheet
+  | otherwise = sheet
+  where transposer = \dir note -> iterate dir note !! (fromInteger $ abs amount)
+
 
 sheetMap :: (SingleNote -> SingleNote) -> Sheet -> Sheet
 sheetMap f (OneNote (a, d)) = (OneNote (f a, d))
 sheetMap f (TwoNote (a, b, d)) = (TwoNote (f a, f b, d))
 sheetMap f (ThreeNote (a, b, c, d)) = (ThreeNote (f a, f b, f c, d))
+sheetMap f (l :+ r) = sheetMap f l :+ sheetMap f r
+sheetMap f (l :| r) = sheetMap f l :| sheetMap f r
 sheetMap f e = e
 
 -----------------
@@ -243,96 +270,38 @@ complex =
   BaseFeedY 500 :-:
   ReferenceDuration 1 :-:
   ResetAxis [X, Y, Z] :-:
-  Title "Alle meine entchen" :-:
-  BeginMusic
-  (
-    TwoNote (C, E, 1/2) :+ Pause 0.1 :+
-    TwoNote (D, G, 1/2) :+ Pause 0.1 :|
-    TwoNote (C, E, 1/2) :+ Pause 0.1 :+
-    TwoNote (D, G, 1/2) :+ Pause 0.1 :+ ThreeNote (C, D, E, 1/4)
+  Title "Alle meine Entchen" :-:
+  BeginMusic (
+    TwoNote (C, E, 1/2) :+ Pause (1/2) :+
+    TwoNote (D, G, 1/2) :+ Pause (1/2) :|
+    TwoNote (C, E, 1/2) :+ Pause (1/2) :+
+    TwoNote (D, G, 1/2) :+ Pause (1/2) :+ ThreeNote (C, D, E, 1/4)
+  ) :-:
+  ResetAxis [X, Y, Z] :-:
+  BeginTransposed 2 (
+    TwoNote (C, E, 1/2) :+ Pause (1/2) :+
+    TwoNote (D, G, 1/2) :+ Pause (1/2) :|
+    TwoNote (C, E, 1/2) :+ Pause (1/2) :+
+    TwoNote (D, G, 1/2) :+ Pause (1/2) :+ ThreeNote (C, D, E, 1/4)
   )
 
---simple :: MusicSheet
---simple =
---  Begin 1 "Simple Test"
---  :| OneNote (C, 4) :+ OneNote (E, 4) :+ OneNote (G, 4) :| Pause 0.2
---  :| OneNote (C, 4) :+ OneNote (DIS, 4) :+ OneNote (G, 4) :| Pause 0.2
 
---fuerElise :: MusicSheet
---fuerElise =
---  Begin 1 "Fuer Elise"
---  :+ OneNote (E1, 1/4) :+ Pause 0.1
---  :+ OneNote (DIS1, 1/4) :+ Pause 0.1
---  :|
---     OneNote (E1, 1/4) :+ Pause 0.1
---  :+ OneNote (DIS1, 1/4) :+ Pause 0.1
---  :+ OneNote (E1, 1/4) :+ Pause 0.1
---  :+ OneNote (H, 1/4) :+ Pause 0.1
---  :+ OneNote (D1, 1/4) :+ Pause 0.1
---  :+ OneNote (C1, 1/4) :+ Pause 0.1
---  :|
---     OneNote (A, 1/4) :+ Pause 0.1
---  :+ Pause 0.4
---  :+ OneNote (C, 1/4) :+ Pause 0.1
---  :+ OneNote (E, 1/4) :+ Pause 0.1
---  :+ OneNote (A, 1/4) :+ Pause 0.1
---  :|
---     OneNote (H, 1/4) :+ Pause 0.1
+testSheet :: Sheet
+testSheet =
+    TwoNote (C, E, 1/2) :+ Pause (1/2) :+
+    TwoNote (D, G, 1/2) :+ Pause (1/2) :|
+    TwoNote (C, E, 1/2) :+ Pause (1/2) :+
+    TwoNote (D, G, 1/2) :+ Pause (1/2) :+ ThreeNote (C, D, E, 1/4)
 
---alleMeineEntchen :: MusicSheet
---alleMeineEntchen =
---  Begin 1 "Alle meine Entchen"
---  :+ OneNote (C, 1/4) :+ Pause 0.2
---  :+ OneNote (D, 1/4) :+ Pause 0.2
---  :+ OneNote (E, 1/4) :+ Pause 0.2
---  :+ OneNote (F, 1/4)
---  :| Pause 0.2
---  :+ OneNote (G, 1/2) :+ Pause 0.2
---  :+ OneNote (G, 1/2)
---  :| Pause 0.2
---  :+ OneNote (A, 1/4) :+ Pause 0.2
---  :+ OneNote (A, 1/4) :+ Pause 0.2
---  :+ OneNote (A, 1/4) :+ Pause 0.2
---  :+ OneNote (A, 1/4) :+ Pause 0.2
---  :+ OneNote (G, 1/2)
---  :| Pause 0.5
 
---test :: MusicSheet
---test =
---  Begin "Alle meine Entchen"
---  :+ OneNote (C, 1/4) :+ Pause 0.2
---  :+ OneNote (D, 1/4) :+ Pause 0.2
---  :+ OneNote (E, 1/4) :+ Pause 0.2
---  :+ OneNote (F, 1/4) :+ Pause 0.2
---  :|
---  OneNote (G, 1/2) :+ Pause 0.2
---  :+ OneNote (G, 1/2) :+ Pause 0.2
---  :|
---  OneNote (A, 1/4) :+ Pause 0.2
---  :+ OneNote (A, 1/4) :+ Pause 0.2
---  :+ OneNote (A, 1/4) :+ Pause 0.2
---  :+ OneNote (A, 1/4) :+ Pause 0.2
---  :|
---  OneNote (G, 1/1) :+ Pause 0.2
---  :|
---  OneNote (A, 1/4) :+ Pause 0.2
---  :+ OneNote (A, 1/4) :+ Pause 0.2
---  :+ OneNote (A, 1/4) :+ Pause 0.2
---  :+ OneNote (A, 1/4) :+ Pause 0.2
---  :|
---  OneNote (G, 1/1) :+ Pause 0.2
---  :|
---  OneNote (F, 1/4) :+ Pause 0.2
---  :+ OneNote (F, 1/4) :+ Pause 0.2
---  :+ OneNote (F, 1/4) :+ Pause 0.2
---  :+ OneNote (F, 1/4) :+ Pause 0.2
---  :|
---  OneNote (E, 1/2) :+ Pause 0.2
---  :+ OneNote (E, 1/2) :+ Pause 0.2
---  :|
---  OneNote (D, 1/4) :+ Pause 0.2
---  :+ OneNote (D, 1/4) :+ Pause 0.2
---  :+ OneNote (D, 1/4) :+ Pause 0.2
---  :+ OneNote (D, 1/4) :+ Pause 0.2
---  :|
---  OneNote (C, 1/1)
+simple :: MusicSheet
+simple =
+  BeginSheet :-:
+  BaseFeedZ 50 :-:
+  BaseFeedX 499 :-:
+  BaseFeedY 500 :-:
+  ReferenceDuration 2 :-:
+  BeginMusic
+  (
+    ThreeNote (C, C1, C2, 2)
+  )
