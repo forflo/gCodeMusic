@@ -142,3 +142,54 @@ BeginMusic (
     `GIS4`,  `A4`,  `AIS4`,  `H4` `}`
 
 ## Syntax reference
+
+The complete haskell EDSL is described best using it's actual
+implementation in Haskell itself. This shall be given as follows
+
+```Haskell
+
+data SingleNote =
+    C | CIS | D | DIS |
+    E | F | FIS | G |
+    GIS | A | AIS | H |
+    C1 | CIS1 | D1 | DIS1 |
+    E1 | F1 | FIS1 | G1 |
+    GIS1 | A1 | AIS1 | H1 |
+    C2 | CIS2 | D2 | DIS2 |
+    E2 | F2 | FIS2 | G2 |
+    GIS2 | A2 | AIS2 | H2 |
+    C3 | CIS3 | D3 | DIS3 |
+    E3 | F3 | FIS3 | G3 |
+    GIS3 | A3 | AIS3 | H3 |
+    C4 | CIS4 | D4 | DIS4 |
+    E4 | F4 | FIS4 | G4 |
+    GIS4 | A4 | AIS4 | H4 deriving (Show, Eq, Ord, Enum)
+
+data Axis =
+    X | Y | Z deriving (Show, Eq)
+
+data MusicSheet where
+  BeginSheet :: MusicSheet
+  BaseFeedZ :: Integer -> MusicSheet -- tune frequency
+  BaseFeedX :: Integer -> MusicSheet -- tune freq
+  BaseFeedY :: Integer -> MusicSheet -- tune freq
+  ReferenceDuration :: Double -> MusicSheet
+  ResetAxis :: [Axis] -> MusicSheet
+  (:-:) :: MusicSheet -> MusicSheet -> MusicSheet
+  Title :: String -> MusicSheet
+  BeginMusic :: Sheet -> MusicSheet
+  BeginTransposed :: Integer -> Sheet -> MusicSheet
+
+infixr 3 :-:
+
+data Sheet where
+  Pause :: Double -> Sheet
+  OneNote :: (SingleNote, Double) -> Sheet
+  TwoNote :: (SingleNote, SingleNote, Double) -> Sheet
+  ThreeNote :: (SingleNote, SingleNote, SingleNote, Double) -> Sheet
+  (:+) :: Sheet -> Sheet -> Sheet
+  (:|) :: Sheet -> Sheet -> Sheet
+
+infixr 4 :|
+infixr 5 :+
+```
