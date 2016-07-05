@@ -57,3 +57,88 @@ you'd instruct the interpreter to move
 of 2 mm/s. The printer would exacly need 55 seconds
 to complete this operation.
 
+## Usage
+
+Lets start with a trivial but comprehensive example:
+
+```
+BeginSheet :-:
+BaseFeedZ 50 :-:
+BaseFeedX 499 :-:
+BaseFeedY 500 :-:
+ReferenceDuration 1 :-:
+ResetAxis [X, Y, Z] :-:
+Title "Alle meine Entchen" :-:
+BeginMusic (
+  OneNote (H1, 1/8) :+
+  TwoNote (C, E, 1/2) :+
+  ThreeNote (C, D, E, 1/4) :|
+  Pause (1/8)
+)
+```
+
+- `BeginSheet` is a nyadic function that outputs
+  general gcode configuration commands
+
+    ```
+    G21 ; metric values
+    G91 ; relative positioning
+    M82 ; extruder absolute mode
+    ```
+
+- `BaseFeedZ <real or fractional>` specifies what feed forward velocity
+  is to be used for the deepest note (that would be C)
+  on axis Z. Similarily, `BaseFeedY` and `BaseFeedX`
+  specifies the same values for axis *X* and *Y*
+
+- `ReferenceDuration <real or fractional>` specifies the
+  duration for one whole note in a four-four time in seconds
+
+- `ResetAxis [<Axis>, ...]` outputs gcode to move given axes into
+  their respective home positions, which would normally just be
+  the absolute position value of 0
+
+- `<Axis>` is one of the following **literal** names: `X`, `Y` or `Z`
+
+- `Title <string>` outputs gcode that leads to the 3D printer
+  displaying the specified string on it's status display
+
+- `<real>` is just a normal floating point number
+
+- `<fractional>`: This is a rational number with both numerator and denominator
+  written as `<numerator> / <denominator>`, where `<numerator>` and
+  `<denominator>` both have to be integers.
+
+- `BeginMusic ( <Sheet> )` is used to group notes and pauses.
+
+- `<Sheet>` only contains the following primitives:
+  `OneNote (<Note>, <duration>)`,
+  `TwoNote (<Note>, <Note>, <duration>)`,
+  `ThreeNote (<Note>, <Note>, <Note>, <duration>)`,
+  `:+`, and `:|`
+
+- The operators `:+` and `:|` are used to chain `OneNote`,
+  `TwoNote` and `ThreeNote` functions together. The effects
+  of both operators are exactly equivalent and thus they can
+  be used interchangeably. Despite this fact, however, there
+  is a reason that is providing the means to syntactically
+  show where a bar line occurs. The bar line, of course, is represented as `:|`
+
+- `<Note>` is one literal name from the following set `{`
+    `C`,  `CIS`,  `D`,  `DIS`,
+    `E`,  `F`,  `FIS`,  `G`,
+    `GIS`,  `A`,  `AIS`,  `H`,
+    `C1`,  `CIS1`,  `D1`,  `DIS1`,
+    `E1`,  `F1`,  `FIS1`,  `G1`,
+    `GIS1`,  `A1`,  `AIS1`,  `H1`,
+    `C2`,  `CIS2`,  `D2`,  `DIS2`,
+    `E2`,  `F2`,  `FIS2`,  `G2`,
+    `GIS2`,  `A2`,  `AIS2`,  `H2`,
+    `C3`,  `CIS3`,  `D3`,  `DIS3`,
+    `E3`,  `F3`,  `FIS3`,  `G3`,
+    `GIS3`,  `A3`,  `AIS3`,  `H3`,
+    `C4`,  `CIS4`,  `D4`,  `DIS4`,
+    `E4`,  `F4`,  `FIS4`,  `G4`,
+    `GIS4`,  `A4`,  `AIS4`,  `H4` `}`
+
+## Syntax reference

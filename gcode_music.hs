@@ -209,6 +209,7 @@ ceilingDbl :: Double -> Integer
 ceilingDbl value =
   ceiling (toRational value)
 
+-- TODO: replace with Prelude.lookup
 findFValue :: SingleNote -> [(SingleNote, Double)] -> Double
 findFValue note lookup =
   let isSearched = \(x, _) -> x == note
@@ -248,7 +249,6 @@ transposeSheet sheet amount
   | amount > 0 = sheetMap (transposer succ) sheet
   | otherwise = sheet
   where transposer = \dir note -> iterate dir note !! (fromInteger $ abs amount)
-
 
 sheetMap :: (SingleNote -> SingleNote) -> Sheet -> Sheet
 sheetMap f (OneNote (a, d)) = (OneNote (f a, d))
