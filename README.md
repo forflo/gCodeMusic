@@ -18,7 +18,7 @@ code called `GCode`.
 
 A typical `gcode` file looks like this:
 
-```
+```G-code
 G21 ; metric values
 G91 ; relative positioning
 M82 ; extruder absolute mode
@@ -46,7 +46,7 @@ current position.
 
 With `G1`'s F parameter, you can also precisely
 set the feed rate (unit mm per minute). With
-```
+```G-Code
 G21 ; metric values
 G91 ; relative positioning
 G1 F120
@@ -61,7 +61,7 @@ to complete this operation.
 
 Lets start with a trivial but comprehensive example:
 
-```
+```Haskell
 BeginSheet :-:
 BaseFeedZ 50 :-:
 BaseFeedX 499 :-:
@@ -80,7 +80,7 @@ BeginMusic (
 - `BeginSheet` is a nyadic function that outputs
   general gcode configuration commands
 
-    ```
+    ```G-code
     G21 ; metric values
     G91 ; relative positioning
     M82 ; extruder absolute mode
