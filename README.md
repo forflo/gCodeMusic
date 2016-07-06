@@ -44,8 +44,10 @@ printer would add 10.2 mm to the current
 position of the X axis regardless of it's
 current position.
 
-With `G1`'s F parameter, you can also precisely
-set the feed rate (unit mm per minute). With
+With `G1`'s *F* parameter, you can also precisely
+set the feed rate (unit: mm per minute). 
+
+With the following example code
 ```G-Code
 G21 ; metric values
 G91 ; relative positioning
@@ -56,6 +58,16 @@ you'd instruct the interpreter to move
 110 milimeter along the Z axis using a speed
 of 2 mm/s. The printer would exacly need 55 seconds
 to complete this operation.
+
+You can easily see now where this is going. As you can
+set the parameters of `G1` in such a way as to precisely
+control the velocity and the distance of a movement along
+a certain axis, you can control the operation frequency
+of the stepper motors as well as the actual time to complete
+a movement. 
+
+Now, with **frequency and timing** probably
+being the very definition of music, we can now start to have som fun!
 
 ## Usage
 
