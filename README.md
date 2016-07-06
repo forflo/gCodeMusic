@@ -120,9 +120,9 @@ BeginMusic (
 - The operators `:+` and `:|` are used to chain `OneNote`,
   `TwoNote` and `ThreeNote` functions together. The effects
   of both operators are exactly equivalent and thus they can
-  be used interchangeably. Despite this fact, however, there
-  is a reason that is providing the means to syntactically
-  show where a bar line occurs. The bar line, of course, is represented as `:|`
+  be used interchangeably. Despite this fact, however, 
+  `:|` should be used toshow where a bar line occurs and
+  `:+` is intended to delimit individual notes.
 
 - `<Note>` is one literal name from the following set `{`
     `C`,  `CIS`,  `D`,  `DIS`,
