@@ -6,7 +6,7 @@ Our faculty recently sponsored a second 3d printer
 for our computer science laboratory.
 The old one - a crappy german reprap - instantly
 became the second choice, because it's inaccurate
-as hell as the steppers lose torque every few milimeters.
+as hell as the steppers lose steps every few milimeters.
 
 I didn't want the printer to die alone on a scrapyard,
 so taught him to play music :)
@@ -120,9 +120,9 @@ BeginMusic (
 - The operators `:+` and `:|` are used to chain `OneNote`,
   `TwoNote` and `ThreeNote` functions together. The effects
   of both operators are exactly equivalent and thus they can
-  be used interchangeably. Despite this fact, however, there
-  is a reason that is providing the means to syntactically
-  show where a bar line occurs. The bar line, of course, is represented as `:|`
+  be used interchangeably. Despite this fact, however, 
+  `:|` should be used toshow where a bar line occurs and
+  `:+` is intended to delimit individual notes.
 
 - `<Note>` is one literal name from the following set `{`
     `C`,  `CIS`,  `D`,  `DIS`,
