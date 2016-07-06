@@ -66,7 +66,7 @@ of the stepper motors as well as the actual time to complete
 a movement. 
 
 Now, with **frequency and timing** probably
-being the very definition of music, we can now start to have som fun!
+being the very definition of music, we can start to have som fun!
 
 ## Usage
 
