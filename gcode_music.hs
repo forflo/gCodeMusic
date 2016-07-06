@@ -305,3 +305,70 @@ simple =
   (
     ThreeNote (C, C1, C2, 2)
   )
+
+fuerElise :: MusicSheet
+fuerElise =
+  BeginSheet :-:
+  BaseFeedZ 50 :-:
+  BaseFeedX 700 :-:
+  BaseFeedY 700 :-:
+  ReferenceDuration 1
+
+simple2 :: MusicSheet
+simple2 =
+  BeginSheet :-:
+  BaseFeedZ 50 :-:
+  BaseFeedX 700 :-:
+  BaseFeedY 700 :-:
+  ReferenceDuration 1 :-:
+  BeginMusic (TwoNote (C, C1, 1/4)) :-:
+  BeginMusic (TwoNote (E, E1, 1/4)) :-:
+  BeginMusic (TwoNote (G, G1, 1/4)) :-:
+  BeginMusic (TwoNote (C, C1, 1/4)) :-:
+  BeginMusic (TwoNote (E, E1, 1/4)) :-:
+  BeginMusic (TwoNote (G, G1, 1/4)) :-:
+
+  BeginMusic (TwoNote (C, C1, 1/4)) :-:
+  BeginMusic (TwoNote (DIS, DIS1, 1/4)) :-:
+  BeginMusic (TwoNote (G, G1, 1/4)) :-:
+  BeginMusic (TwoNote (C, C1, 1/4)) :-:
+  BeginMusic (TwoNote (DIS, DIS1, 1/4)) :-:
+  BeginMusic (TwoNote (G, G1, 1/4)) :-:
+
+  BeginMusic (TwoNote (C, C1, 1/8)) :-:
+  BeginMusic (TwoNote (E, E1, 1/8)) :-:
+  BeginMusic (TwoNote (G, G1, 1/8)) :-:
+  BeginMusic (TwoNote (C, C1, 1/8)) :-:
+  BeginMusic (TwoNote (E, E1, 1/8)) :-:
+  BeginMusic (TwoNote (G, G1, 1/8)) :-:
+
+  BeginMusic (TwoNote (C, C1, 1/8)) :-:
+  BeginMusic (TwoNote (DIS, DIS1, 1/8)) :-:
+  BeginMusic (TwoNote (G, G1, 1/8)) :-:
+  BeginMusic (TwoNote (C, C1, 1/8)) :-:
+  BeginMusic (TwoNote (DIS, DIS1, 1/8)) :-:
+  BeginMusic (TwoNote (G, G1, 1/8))
+
+intervalTest :: MusicSheet
+intervalTest =
+  BeginSheet :-:
+  BaseFeedZ 50 :-:
+  BaseFeedX 700 :-:
+  BaseFeedY 700 :-:
+  ResetAxis [X, Y] :-:
+  ReferenceDuration 2 :-:
+  BeginMusic (TwoNote (C, E, 1/8)) :-:
+  BeginMusic (TwoNote (C, E, 1/8)) :-:
+  BeginMusic (TwoNote (C, E, 1/8)) :-:
+  BeginMusic (TwoNote (C, DIS, 1/8)) :-:
+  BeginMusic (TwoNote (C, DIS, 1/8)) :-:
+  BeginMusic (TwoNote (C, DIS, 1/8)) :-:
+
+  BeginMusic (TwoNote (C, E, 1/8) :+ Pause (1/16)) :-:
+  BeginMusic (TwoNote (C, E, 1/8) :+ Pause (1/16)) :-:
+  BeginMusic (TwoNote (C, E, 1/8) :+ Pause (1/16)) :-:
+  BeginMusic (TwoNote (C, DIS, 1/8) :+ Pause (1/16)) :-:
+  BeginMusic (TwoNote (C, DIS, 1/8) :+ Pause (1/16)) :-:
+  BeginMusic (TwoNote (C, DIS, 1/8) :+ Pause (1/16)) :-:
+  BeginMusic (TwoNote (C, H, 1/4) :+ Pause (1/16)) :-:
+  BeginMusic (TwoNote (C, C1, 1/4) :+ Pause (1/16))
