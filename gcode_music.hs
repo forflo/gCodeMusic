@@ -9,6 +9,7 @@
 import qualified Data.Map as M;
 import Data.Maybe;
 import Debug.Trace as T;
+import Text.Printf as P;
 
 ------------------------
 -- Specification of EDSL
@@ -81,9 +82,9 @@ instance Show MusicSheet where
 
 instance Show Sheet where
   show (Pause f) = "(Pause :" ++ show f ++ ")"
-  show (OneNote n) = "(note: " ++ show n ++ ")"
-  show (TwoNote n) = "(note: " ++ show n ++ ")"
-  show (ThreeNote n) = "(note: " ++ show n ++ ")"
+  show (OneNote n) = "(Note: " ++ show n ++ ")"
+  show (TwoNote n) = "(Note: " ++ show n ++ ")"
+  show (ThreeNote n) = "(Note: " ++ show n ++ ")"
   show (e1 :| e2) = "(" ++ show e1 ++ " | " ++ show e2 ++ ")"
   show (e1 :+ e2) = "(" ++ show e1 ++ " + " ++ show e2 ++ ")"
 
@@ -157,7 +158,7 @@ generateGCode n@(OneNote (note, duration)) preferences =
   let (axisLenMapping, feedrate) = getLF [Y] [note] preferences duration
   in "G1 " ++ translateAxisLenMapping axisLenMapping
      ++ "F"
-     ++ show feedrate ++ " ; "
+     ++ printf "%0.10f" feedrate ++ " ; "
      ++ show n ++ "\n"
 
 generateGCode n@(TwoNote (note1, note2, duration)) preferences =
@@ -195,7 +196,8 @@ getLF axis n preferences duration =
 -- helper functions for generateGCode
 translateAxisLenMapping :: [(Axis, Double)] -> String
 translateAxisLenMapping mapping =
-  concat $ map (\t -> show (fst t) ++ show (snd t) ++ " ") mapping
+  let p = printf "%0.10f"
+  in concat $ map (\t -> show (fst t) ++ p (snd t) ++ " ") mapping
 
 calcLength :: Double -> Double -> Preferences -> Double
 calcLength velocity duration preferences =
@@ -220,7 +222,9 @@ ceilingDbl value =
 findFValue :: SingleNote -> [(SingleNote, Double)] -> Double
 findFValue note lookup =
   let isSearched = \(x, _) -> x == note
-  in snd $ (filter isSearched lookup) !! 0
+  in case (note) of
+       NULL -> nullNoteConstant
+       _ -> snd $ (filter isSearched lookup) !! 0
 
 round' :: Integer -> Double -> Double
 round' digits number =
@@ -318,7 +322,8 @@ nullNoteTest =
   BeginMusic
   (
      OneNote (NULL, 1/4)
-  :+ OneNote (NULL, 1/4)
+  :+ TwoNote (C, NULL, 1/4)
+  :+ ThreeNote (C, E, NULL, 1/4)
   )
 
 fuerElise :: MusicSheet
