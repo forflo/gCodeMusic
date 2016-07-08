@@ -155,8 +155,7 @@ generateGCode (e1 :+ e2) preferences =
 
 generateGCode n@(OneNote (note, duration)) preferences =
   let (axisLenMapping, feedrate) = getLF [Y] [note] preferences duration
-  in
-    "G1 " ++ translateAxisLenMapping axisLenMapping
+  in "G1 " ++ translateAxisLenMapping axisLenMapping
      ++ "F"
      ++ show feedrate ++ " ; "
      ++ show n ++ "\n"
@@ -189,7 +188,6 @@ getLF axis n preferences duration =
       feedTable = map zipNF axis
       feedRates = zipWith findFValue n feedTable
       distances = map calc feedRates
-      -- TODO: this is not correct
       feedrate = round' 10 (vectorLength feedRates)
   in (zip axis distances, feedrate)
 
