@@ -209,6 +209,9 @@ vectorLength vector =
 notes :: [SingleNote]
 notes = [C .. H4]
 
+nullNoteConstant :: Double
+nullNoteConstant = 0.000100000
+
 ceilingDbl :: Double -> Integer
 ceilingDbl value =
   ceiling (toRational value)
@@ -223,15 +226,6 @@ round' :: Integer -> Double -> Double
 round' digits number =
   (fromInteger $ round $ number * (10 ^ digits)) /
   (10.0 ^^ digits)
-
-forwards :: Double -> [Double]
-forwards speed =
-  let upperBound = toInteger (length notes)
-  in map
-     (\chromaticTone ->
-        speed * 2 **
-        (1/12 * fromInteger chromaticTone))
-     [0 .. upperBound]
 
 forwards' :: Axis -> Preferences -> [Double]
 forwards' axis preferences =
@@ -311,6 +305,20 @@ simple =
   BeginMusic
   (
     ThreeNote (C, C1, C2, 2)
+  )
+
+nullNoteTest :: MusicSheet
+nullNoteTest =
+  BeginSheet :-:
+  BaseFeedZ 50 :-:
+  BaseFeedX 700 :-:
+  BaseFeedY 700 :-:
+  ReferenceDuration 1 :-:
+  Title "Für Elise" :-:
+  BeginMusic
+  (
+     OneNote (NULL, 1/4)
+  :+ OneNote (NULL, 1/4)
   )
 
 fuerElise :: MusicSheet
