@@ -5,8 +5,7 @@
 Our faculty recently sponsored a second 3d printer
 for our computer science laboratory.
 The old one - a crappy german reprap - instantly
-became the second choice, because it's inaccurate
-as hell as the steppers lose steps every few milimeters.
+became the second choice, because of it's inaccuracy.
 
 I didn't want the printer to die alone on a scrapyard,
 so taught him to play music :)
@@ -44,8 +43,10 @@ printer would add 10.2 mm to the current
 position of the X axis regardless of it's
 current position.
 
-With `G1`'s F parameter, you can also precisely
-set the feed rate (unit mm per minute). With
+With `G1`'s *F* parameter, you can also precisely
+set the feed rate (unit: mm per minute). 
+
+With the following example code
 ```G-Code
 G21 ; metric values
 G91 ; relative positioning
@@ -56,6 +57,16 @@ you'd instruct the interpreter to move
 110 milimeter along the Z axis using a speed
 of 2 mm/s. The printer would exacly need 55 seconds
 to complete this operation.
+
+You can easily see now where this is going. As you can
+set the parameters of `G1` in such a way as to precisely
+control the velocity and the distance of a movement along
+a certain axis, you can control the operation frequency
+of the stepper motors as well as the actual time to complete
+a movement. 
+
+Now, with **frequency and timing** probably
+being the very definition of music, we can start to have som fun!
 
 ## Usage
 
@@ -89,7 +100,7 @@ BeginMusic (
 - `BaseFeedZ <real or fractional>` specifies what feed forward velocity
   is to be used for the deepest note (that would be C)
   on axis Z. Similarily, `BaseFeedY` and `BaseFeedX`
-  specifies the same values for axis *X* and *Y*
+  specify the same values for axes *X* and *Y*
 
 - `ReferenceDuration <real or fractional>` specifies the
   duration for one whole note in a four-four time in seconds
@@ -98,7 +109,7 @@ BeginMusic (
   their respective home positions, which would normally just be
   the absolute position value of 0
 
-- `<Axis>` is one of the following **literal** names: `X`, `Y` or `Z`
+- `<Axis>` is one of the following *literal* names: `X`, `Y` or `Z`
 
 - `Title <string>` outputs gcode that leads to the 3D printer
   displaying the specified string on it's status display
@@ -106,23 +117,26 @@ BeginMusic (
 - `<real>` is just a normal floating point number
 
 - `<fractional>`: This is a rational number with both numerator and denominator
-  written as `<numerator> / <denominator>`, where `<numerator>` and
-  `<denominator>` both have to be integers.
+  written as `(<numerator> / <denominator>)`, where `<numerator>` and
+  `<denominator>` both have to be integers. Note that the parentheses are 
+  syntactically crucial here
 
 - `BeginMusic ( <Sheet> )` is used to group notes and pauses.
 
 - `<Sheet>` only contains the following primitives:
-  `OneNote (<Note>, <duration>)`,
-  `TwoNote (<Note>, <Note>, <duration>)`,
-  `ThreeNote (<Note>, <Note>, <Note>, <duration>)`,
+  `OneNote (<Note>, <Duration>)`,
+  `TwoNote (<Note>, <Note>, <Duration>)`,
+  `ThreeNote (<Note>, <Note>, <Note>, <Duration>)`,
   `:+`, and `:|`
+
+- `<Duration>` = `<real or fractional>`
 
 - The operators `:+` and `:|` are used to chain `OneNote`,
   `TwoNote` and `ThreeNote` functions together. The effects
   of both operators are exactly equivalent and thus they can
   be used interchangeably. Despite this fact, however, 
-  `:|` should be used toshow where a bar line occurs and
-  `:+` is intended to delimit individual notes.
+  `:|` should be used to show where a bar line occurs and
+  `:+` is intended to solely delimit individual notes.
 
 - `<Note>` is one literal name from the following set `{`
     `C`,  `CIS`,  `D`,  `DIS`,
