@@ -154,30 +154,27 @@ generateGCode (e1 :+ e2) preferences =
   generateGCode e1 preferences ++ generateGCode e2 preferences
 
 generateGCode n@(OneNote (note, duration)) preferences =
-  let ([(Z, lenZ)], feedrate) = getLF [Z] [note] preferences duration
-  in "G1 Z"
-     ++ show lenZ
-     ++ " F"
+  let (axisLenMapping, feedrate) = getLF [Y] [note] preferences duration
+  in
+    "G1 " ++ translateAxisLenMapping axisLenMapping
+     ++ "F"
      ++ show feedrate ++ " ; "
      ++ show n ++ "\n"
 
 generateGCode n@(TwoNote (note1, note2, duration)) preferences =
-  let ([(X, lenX), (Y, lenY)], feedrate) =
+  let (axisLenMapping, feedrate) =
         getLF [X, Y] [note1, note2] preferences duration
-  in "G1 X" ++ show lenX
-     ++ " Y" ++ show lenY
-     ++ " F"
+  in "G1 " ++ translateAxisLenMapping axisLenMapping
+     ++ "F"
      ++ show feedrate
      ++ " ; " ++ show n
      ++ "\n"
 
 generateGCode n@(ThreeNote (note1, note2, note3, duration)) preferences =
-  let ([(Z, lenZ), (X, lenX), (Y, lenY)], feedrate) =
+  let (axisLenMapping, feedrate) =
         getLF [Z, X, Y] [note1, note2, note3] preferences duration
-  in "G1 Z" ++ show lenZ
-     ++ " X" ++ show lenX
-     ++ " Y" ++ show lenY
-     ++ " F"
+  in "G1 " ++ translateAxisLenMapping axisLenMapping
+     ++ "F"
      ++ show feedrate
      ++ " ; " ++ show n
      ++ "\n"
@@ -198,6 +195,10 @@ getLF axis n preferences duration =
 
 ---------------------------------------
 -- helper functions for generateGCode
+translateAxisLenMapping :: [(Axis, Double)] -> String
+translateAxisLenMapping mapping =
+  concat $ map (\t -> show (fst t) ++ show (snd t) ++ " ") mapping
+
 calcLength :: Double -> Double -> Preferences -> Double
 calcLength velocity duration preferences =
   (fromJust (M.lookup "duration" preferences) * duration) *
