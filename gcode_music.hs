@@ -13,21 +13,23 @@ import Debug.Trace as T;
 ------------------------
 -- Specification of EDSL
 data SingleNote =
-    C | CIS | D | DIS |
-    E | F | FIS | G |
-    GIS | A | AIS | H |
-    C1 | CIS1 | D1 | DIS1 |
-    E1 | F1 | FIS1 | G1 |
-    GIS1 | A1 | AIS1 | H1 |
-    C2 | CIS2 | D2 | DIS2 |
-    E2 | F2 | FIS2 | G2 |
-    GIS2 | A2 | AIS2 | H2 |
-    C3 | CIS3 | D3 | DIS3 |
-    E3 | F3 | FIS3 | G3 |
-    GIS3 | A3 | AIS3 | H3 |
-    C4 | CIS4 | D4 | DIS4 |
-    E4 | F4 | FIS4 | G4 |
-    GIS4 | A4 | AIS4 | H4 deriving (Show, Eq, Ord, Enum)
+  C | CIS | D | DIS |
+  E | F | FIS | G |
+  GIS | A | AIS | H |
+  C1 | CIS1 | D1 | DIS1 |
+  E1 | F1 | FIS1 | G1 |
+  GIS1 | A1 | AIS1 | H1 |
+  C2 | CIS2 | D2 | DIS2 |
+  E2 | F2 | FIS2 | G2 |
+  GIS2 | A2 | AIS2 | H2 |
+  C3 | CIS3 | D3 | DIS3 |
+  E3 | F3 | FIS3 | G3 |
+  GIS3 | A3 | AIS3 | H3 |
+  C4 | CIS4 | D4 | DIS4 |
+  E4 | F4 | FIS4 | G4 |
+  GIS4 | A4 | AIS4 | H4 |
+  NULL deriving (Show, Eq, Ord, Enum)
+
 
 data Axis = X | Y | Z deriving (Show, Eq)
 
@@ -135,13 +137,13 @@ generateGCode :: Sheet -> Preferences -> String
 generateGCode (e1 :| e2) preferences =
   generateGCode e1 preferences ++ generateGCode e2 preferences
 
--- calculates the future position
-generateGCode (OneNote (note, duration) :+ e2) preferences =
-  let lookup = zip [C .. H1] (forwards $ fromJust (M.lookup "feedZ" preferences))
-      fn = (calcLength (findFValue note lookup) duration preferences)
-      newCoordinate = (round' 10 fn)
-      futureZ = fromJust (M.lookup "futureZ" preferences) + newCoordinate
-  in generateGCode e2 (M.insert "futureZ" futureZ preferences)
+---- calculates the future position
+--generateGCode (OneNote (note, duration) :+ e2) preferences =
+--  let lookup = zip [C .. H1] (forwards $ fromJust (M.lookup "feedZ" preferences))
+--      fn = (calcLength (findFValue note lookup) duration preferences)
+--      newCoordinate = (round' 10 fn)
+--      futureZ = fromJust (M.lookup "futureZ" preferences) + newCoordinate
+--  in generateGCode e2 (M.insert "futureZ" futureZ preferences)
 
 generateGCode (Pause fraction) preferences =
   "G4 P"
@@ -151,26 +153,25 @@ generateGCode (Pause fraction) preferences =
 generateGCode (e1 :+ e2) preferences =
   generateGCode e1 preferences ++ generateGCode e2 preferences
 
-generateGCode (OneNote (note, duration)) preferences =
+generateGCode n@(OneNote (note, duration)) preferences =
   let ([(Z, lenZ)], feedrate) = getLF [Z] [note] preferences duration
-  in "G1 F"
-     ++ show feedrate
-     ++ " ; sets feedrate to "
-     ++ show feedrate ++ " mm/min"
-     ++ "\nG1 Z"
+  in "G1 Z"
      ++ show lenZ
-     ++ " ; moves to Z="
-     ++ show lenZ ++ "\n"
+     ++ " F"
+     ++ show feedrate ++ " ; "
+     ++ show n ++ "\n"
 
-generateGCode (TwoNote (note1, note2, duration)) preferences =
-  let ([(X, lenX), (Y, lenY)], feedrate) = getLF [X, Y] [note1, note2] preferences duration
+generateGCode n@(TwoNote (note1, note2, duration)) preferences =
+  let ([(X, lenX), (Y, lenY)], feedrate) =
+        getLF [X, Y] [note1, note2] preferences duration
   in "G1 X" ++ show lenX
      ++ " Y" ++ show lenY
      ++ " F"
      ++ show feedrate
+     ++ " ; " ++ show n
      ++ "\n"
 
-generateGCode (ThreeNote (note1, note2, note3, duration)) preferences =
+generateGCode n@(ThreeNote (note1, note2, note3, duration)) preferences =
   let ([(Z, lenZ), (X, lenX), (Y, lenY)], feedrate) =
         getLF [Z, X, Y] [note1, note2, note3] preferences duration
   in "G1 Z" ++ show lenZ
@@ -178,9 +179,13 @@ generateGCode (ThreeNote (note1, note2, note3, duration)) preferences =
      ++ " Y" ++ show lenY
      ++ " F"
      ++ show feedrate
+     ++ " ; " ++ show n
      ++ "\n"
 
-getLF :: [Axis] -> [SingleNote] -> Preferences -> Duration -> ([(Axis, Double)], Double)
+getLF ::
+  [Axis] -> [SingleNote] ->
+  Preferences -> Duration ->
+  ([(Axis, Double)], Double)
 getLF axis n preferences duration =
   let calc = \feedrate -> round' 10 $ calcLength feedrate duration preferences
       zipNF x = zip notes (forwards' x preferences)
@@ -248,7 +253,10 @@ transposeSheet sheet amount
   | amount < 0 = sheetMap (transposer pred) sheet
   | amount > 0 = sheetMap (transposer succ) sheet
   | otherwise = sheet
-  where transposer = \dir note -> iterate dir note !! (fromInteger $ abs amount)
+  where transposer = \dir note ->
+          case (note) of
+            NULL -> NULL
+            _ -> iterate dir note !! (fromInteger $ abs amount)
 
 sheetMap :: (SingleNote -> SingleNote) -> Sheet -> Sheet
 sheetMap f (OneNote (a, d)) = (OneNote (f a, d))
@@ -312,7 +320,22 @@ fuerElise =
   BaseFeedZ 50 :-:
   BaseFeedX 700 :-:
   BaseFeedY 700 :-:
-  ReferenceDuration 1
+  ReferenceDuration 1 :-:
+  Title "Für Elise" :-:
+  BeginMusic
+  (
+     OneNote (C, 1/4)
+  :+ OneNote (D, 1/4)
+  :+ OneNote (E, 1/4)
+  :+ OneNote (F, 1/4)
+  :+ OneNote (G, 1/2)
+  :+ OneNote (G, 1/2)
+  :+ OneNote (A, 1/4)
+  :+ OneNote (A, 1/4)
+  :+ OneNote (A, 1/4)
+  :+ OneNote (A, 1/4)
+  :+ OneNote (G, 1/2)
+  )
 
 simple2 :: MusicSheet
 simple2 =
@@ -356,6 +379,7 @@ intervalTest =
   BaseFeedX 700 :-:
   BaseFeedY 700 :-:
   ResetAxis [X, Y] :-:
+-- TODO: implement this:  AxisNoteMap (X), (X, Y), (X, Y, Z) :-:
   ReferenceDuration 2 :-:
   BeginMusic (TwoNote (C, E, 1/8)) :-:
   BeginMusic (TwoNote (C, E, 1/8)) :-:
