@@ -1,6 +1,6 @@
-# A fun music EDSL
+# A Fun Music EDSL (Embedded Domain Specific Language)
 
-## What's this repo about?
+## What is this repo about?
 
 Our faculty recently sponsored a second 3d printer
 for our computer science laboratory.
@@ -8,14 +8,14 @@ The old one - a crappy german reprap - instantly
 became the second choice, because of it's inaccuracy.
 
 I didn't want the printer to die alone on a scrapyard,
-so taught him to play music :)
+so I created this language to let it play music.
 
 ## Basic idea
 
 3D printers usually interpret a simple numerical
 code called `GCode`.
 
-A typical `gcode` file looks like this:
+A typical `Gcode` file looks like this:
 
 ```G-code
 G21 ; metric values
@@ -58,19 +58,20 @@ you'd instruct the interpreter to move
 of 2 mm/s. The printer would exacly need 55 seconds
 to complete this operation.
 
-You can easily see now where this is going. As you can
+**Conclusion**
+As you can
 set the parameters of `G1` in such a way as to precisely
 control the velocity and the distance of a movement along
 a certain axis, you can control the operation frequency
 of the stepper motors as well as the actual time to complete
 a movement. 
 
-Now, with **frequency and timing** probably
-being the very definition of music, we can start to have som fun!
+Now, with _frequency and timing_
+being the very essence of music, let's show some some examples!
 
 ## Usage
 
-Lets start with a trivial but comprehensive example:
+Let's start with a trivial but comprehensive example:
 
 ```Haskell
 BeginSheet :-:
