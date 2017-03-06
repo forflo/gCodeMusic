@@ -4,9 +4,8 @@
 
 Our faculty recently sponsored a second 3d printer
 for our computer science laboratory.
-The old one - a crappy german reprap - instantly
+The old one, instantly
 became the second choice, because of it's inaccuracy.
-
 I didn't want the printer to die alone on a scrapyard,
 so I created this language to let it play music.
 
